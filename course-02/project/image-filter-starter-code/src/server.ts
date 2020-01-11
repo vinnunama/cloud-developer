@@ -33,10 +33,38 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/", async ( req, res ) => {
-    res.send("try GET /filteredimage?image_url={{}}")
+  app.get( "/filteredimage", async ( req, res,next ) => {
+
+    let image_url = req.query.image_url;
+
+    // check Filename is valid
+    if (!image_url) {
+        return res.status(422).send({ message: 'Image url is required' });
+    }
+
+    console.log(image_url);
+    //Filtering image url
+    const filtered_image_url = filterImageFromURL(image_url);
+    
+    //Getting delete path
+    const deletepath = filtered_image_url.then(function (value){
+        console.log(value);
+        res.sendFile(value);
+        return value;
+    });
+
+    //Deleting file after one second
+    deletepath.then(function (deletevalue) {
+      setTimeout(() => {deleteLocalFiles([deletevalue])},1000);
+    });
   } );
   
+  //CORS Should be restricted
+  app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "http://localhost:8100");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    next();
+  });
 
   // Start the Server
   app.listen( port, () => {
